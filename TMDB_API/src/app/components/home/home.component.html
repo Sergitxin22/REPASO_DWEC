@@ -1,9 +1,0 @@
-<div class="container text-center mt-5">
-    <h1 class="mb-3">Búsqueda de películas</h1>
-    <input #input type="search" name="" id="" (keydown.enter)="buscar(input.value)" placeholder="Buscar" />
-    <a (click)="buscar(input.value)" class="btn btn-success ms-2">Buscar</a>
-
-    <div *ngIf="textoCorto" class="alert alert-danger" role="alert">
-        Debes introducir al menos cuatro caracteres en el cuadro de búsqueda
-    </div>      
-</div>
