@@ -2,14 +2,13 @@
 1. [Extensiones recomendadas](#extensiones-recomendadas)
 1. [Creación del proyecto](#creación-del-proyecto)
 2. [Configuración del proyecto](#configuración-del-proyecto)
-3. [Creación del modelo](#creación-del-modelo)
-4. [Creación del DTO](#creación-del-dto)
-5. [Creación del DAO](#creación-del-dao)
+3. [Ejecutar el proyecto](#ejecutar-el-proyecto)
+4. [Funcionamiento de la API](#funcionamiento-de-la-api)
+5. [Creación de la interfaz](#creación-de-la-interfaz)
 6. [Creación del servicio](#creación-del-servicio)
-7. [Creación del controlador](#creación-del-controlador)
-8. [Añadir RestTemplate al MsTareasApplication](#añadir-resttemplate-al-mstareasapplication)
-9. [Probar la API](#probar-la-api)
-10. [Posibles errores](#posibles-errores)
+6. [Creación del interceptor](#creación-del-interceptor)
+8. [Ejemplo Componente ListadoPlaylist](#ejemplo-componente-listadoplaylist)
+9. [Barra de búsqueda](#barra-de-búsqueda)
 ### Extensiones recomendadas
 ***
 1. Material Icon Theme (Iconos bonitos) → https://marketplace.visualstudio.com/items?itemName=PKief.material-icon-theme
@@ -25,353 +24,328 @@ ng new nombreApp
 ```
 3. En "Would you like to add Angular routing?" Ponemos "y" para que nos genere automáticamente el app-routing
 4. En "Which stylesheet format would you like to use?" Presionamos la tecla enter para elegir la opción de css
-5. Una vez termine de descargar las dependencias tendremos el proyecto creado: [Imagen](/microservicios/images/crear-repositorios.PNG)
+5. Una vez termine de descargar las dependencias tendremos el proyecto creado: [Imagen](/images/crear-proyecto.PNG)
 ### Configuración del proyecto
 ***
-Una vez creado el proyecto vamos a configurar el fichero application.properties ( en src → main → resources) para asignar un nombre a la aplicación, el puerto de escucha y los parámetros de la configuración de SQL Server y del servidor de recursos:
+1. Abrimos el archivo src => app → app.module.ts → e importamos el HttpClientModule de la librería '@angular/common/http':
+```
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http'
 
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
 ```
-spring.application.name=servicio-tareas
-server.port=9005
-spring.datasource.url=jdbc:sqlserver://localhost:2000;databaseName=pubs;TrustServerCertificate=true
-spring.datasource.username=sa
-spring.datasource.password=tiger
-spring.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
-spring.jpa.show-sql=true
-spring.jpa.hibernate.dialect=org.hibernate.dialect.SQLServerDialect
-spring.jpa.hibernate.ddl-auto=update
+2. Creamos los componentes necesarios para nuestra aplicación (se suelen meter en la carpeta components):
 ```
-### Creación del modelo
+ng g c components/nombreComponente --skip-tests
+```
+3. Abrimos el archivo src => app → app-routing.module.ts → e incluimos nuestros endpoints en la constante routes:
+```
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { DetallePlaylistComponent } from './components/detalle-playlist/detalle-playlist.component';
+import { HomeComponent } from './components/home/home.component';
+import { ListadoPlaylistComponent } from './components/listado-playlist/listado-playlist.component';
+import { PlaylistCategoriaComponent } from './components/playlist-categoria/playlist-categoria.component';
+
+const routes: Routes = [
+  { path: 'home', component: HomeComponent},
+  { path: 'categorias/:id/playlists', component: PlaylistCategoriaComponent},
+  { path: 'playlists/:id', component: DetallePlaylistComponent},
+  { path: 'listado-playlists/:texto', component: ListadoPlaylistComponent},
+  { path: '**', redirectTo: 'home'}
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+```
+4. Ahora vamos a incluir Bootstrap a nuestra aplicación, para eso, hay que ir al archivo index.html y añadir el siguiente código en el head:
+```
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+```
+5. Borramos el contenido del archivo app.component.html y ponemos la etiqueta <router-outlet></router-outlet> para que nos muestre el componente de la ruta actual que hemos puesto en el app-routing.module.ts, además podemos poner todo lo que queramos que se visialize en toda la aplicación como el header o el footer:
+```
+<app-barra-navegacion></app-barra-navegacion>
+<router-outlet></router-outlet>
+```
+### Ejecutar el proyecto
 ***
-Creamos el modelo Tarea.class en el paquete org.zabalburu.tareas.modelo
+1. Para que se nos ejecute la aplicación ejecutamos el siguiente comando en una terminal:
 ```
-package org.zabalburu.tareas.modelo;
-
-import java.sql.Date;
-
-import org.springframework.format.annotation.DateTimeFormat;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-@Data
-@Entity
-@Table(name = "tareas")
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Tarea {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@EqualsAndHashCode.Include
-	private Integer id;
-	
-	@Column(name = "idusuario")
-	private Integer idUsuario;
-	
-	private String titulo;
-	
-	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date fecha;
-	
-	private String descripcion;	
-	private Boolean realizada;
-}
+ng serve -o
 ```
-### Creación del DTO
+2. Abrimos otra terminal (sin cerrar la anterior) para crear todos los archivos necesarios sin parar nuestra aplicación
+### Funcionamiento de la API
 ***
-Para incluir la paginación, creamos el DTO TareaDTO.class en el paquete org.zabalburu.tareas.dto
-```
-package org.zabalburu.tareas.dto;
+Una cosa de las más importantes para este ejercicio es entender bien como funciona la API, para eso, abrimos la documentación oficial: https://developer.spotify.com/console/ hemos abierto la parte "/console" porque nos va a ayudar mucho a la hora de crear las interfaces
 
-import java.util.List;
-
-import org.zabalburu.tareas.modelo.Tarea;
-
-import lombok.Data;
-
-@Data
-public class TareaDTO {
-	private Integer pagina;
-	private Integer totalPaginas;
-	private Integer tareasPorPagina;
-	private List<Tarea> tareas;
-}
-```
-### Creación del DAO
+1. Abrimos el endpoint que queramos: [Imagen](/images/api-1.PNG)
+2. Pinchamos en GET TOKEN para que nos genere automáticamente un token
+3. Pinchamos en FILL SAMPLE DATA y después es TRY IT para probar el endpoint: 
+4. Una vez se haya ejecutado, copiamos el fragmento de código que empieza por curl -X "GET": [Imagen](/images/api-2.PNG)
+5. Nos dirigimos al POSTMAN, pinchamos en Import Raw test y pegamos el código anterior: [Imagen](/images/postman-1.PNG)
+6. Hacemos click en Continue → Import y automáticamente nos crea el endpoint con los parámetros y las cabeceras: [Imagen](/images/postman-2.PNG)
+### Creación de la interfaz
 ***
-Para incluir la paginación, creamos la interfaz TareasRepository.java en el paquete org.zabalburu.tareas.dao\
-Este DAO debe implementar la interfaz JpaRepository\
-[Imagen](/microservicios/images/crear-repositorios.PNG)
+1. Una vez tenemos la respuesta del endpoint en el postman, lo copiamos con el icono del portapapeles y nos volvemos a VS Code
+2. Creamos una interfaz con el siguiente código:
 ```
-package org.zabalburu.tareas.dao;
-
-import java.util.Optional;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.zabalburu.tareas.modelo.Tarea;
-
-public interface TareasRepository extends JpaRepository<Tarea, Integer> {
-	Page<Tarea> findByIdUsuarioOrderByFechaDesc(Pageable pg, Integer idUsuario);
-
-	@Query("Select t From Tarea t where t.idUsuario=:idusuario and not t.realizada Order By t.fecha desc")
-	Page<Tarea> getTareasPendientes(Pageable pg, @Param(value = "idusuario") Integer idUsuario);
-	
-	Optional<Tarea> findByIdUsuarioAndId(Integer idUsuario, Integer idTarea);
-}
+ng g i models/getEndpoint
 ```
+3. Una vez creada, la abrimos, borramos el contenido y al tener instalada la extensión "Paste JSON as Code", pulsamos Ctrl + Shift + V y se nos va a abrir una ventana en la que hay que poner el nombre que le queramos poner a la interfaz, en mi caso RespuestaGetEndpoint
+4. Le damos al enter y nos creará todas las interfaces
 ### Creación del servicio
 ***
-Ahora creamos la clase TareasService en el paquete org.zabalburu.tareas.service y le ponemos el decorador @Service, también inyectamos el dao con el decorador @Autowired
+Lo siguiente que debemos crear es el servicio, que será el archivo que conectará nuestro front con el back a través de la API
+
+1. Creamos el servicio con el siguiente comando:
 ```
-package org.zabalburu.tareas.service;
+ng g s services/nombre --skip-tests
+```
+2. En dicho servicio tenemos que crear el método getToken y los métodos que vayamos a utilizar\
+Ejemplo de servicio:
+```
+import { HttpClient, HttpClientModule, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+import { RespuestaGetCategorias } from '../models/get-categorias';
+import { RespuestaPlaylistTracks } from '../models/get-playlist-tracks';
+import { RespuestaPlaylistsBusqueda } from '../models/get-playlists-busqueda';
+import { RespuestaCategoriaPlaylists } from '../models/get-playlists-categoria';
+import { RespuestaGetToken } from '../models/get-token';
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
-import org.zabalburu.tareas.dao.TareasRepository;
-import org.zabalburu.tareas.dto.TareaDTO;
-import org.zabalburu.tareas.modelo.Tarea;
+@Injectable({
+  providedIn: 'root'
+})
+export class SpotifyService {
 
-@Service
-public class TareasService {
-	@Autowired
-	private TareasRepository dao;
-	
-	@Autowired
-	private RestTemplate template;
-	
-	private boolean existeUsuario(Integer idUsuario) {
-		try {
-			template.getForObject("http://localhost:8005/usuarios/{id}", Object.class, idUsuario);
-			return true;
-		} catch (HttpClientErrorException.NotFound ex) {
-			return false;
-		}
-	}
-	
-	public TareaDTO getTareas(Integer pagina, Integer idUsuario) {
-		if (existeUsuario(idUsuario)) {
-			Pageable pg = PageRequest.of(pagina-1, 3);
-			Page<Tarea> page = dao.findByIdUsuarioOrderByFechaDesc(pg, idUsuario);
-			TareaDTO dto = new TareaDTO();
-			dto.setPagina(pagina);
-			dto.setTareas(page.getContent());
-			dto.setTareasPorPagina(3);
-			dto.setTotalPaginas(page.getTotalPages());
-			return dto;
-		} else {
-			return null;
-		}
-	}
-	
-	public TareaDTO getTareasPendientes(Integer pagina, Integer idUsuario) {
-		if (existeUsuario(idUsuario)) {
-			Pageable pg = PageRequest.of(pagina-1, 3);
-			Page<Tarea> page = dao.getTareasPendientes(pg, idUsuario);
-			TareaDTO dto = new TareaDTO();
-			dto.setPagina(pagina);
-			dto.setTareas(page.getContent());
-			dto.setTareasPorPagina(3);
-			dto.setTotalPaginas(page.getTotalPages());
-			return dto;
-		} else {
-			return null;
-		}
-	}
-	
-	public Tarea nuevaTarea(Tarea t) {
-		if (existeUsuario(t.getIdUsuario())) {
-			return dao.save(t);
-		} else {
-			return null;
-		}
-	}
-	
-	public Tarea getTarea(Integer idUsuario, Integer idTarea) {
-		Tarea t = null;
-		if (existeUsuario(idUsuario)) {
-			t = dao.findByIdUsuarioAndId(idUsuario, idTarea).orElse(null);
-		}
-		return t;
-	}
-	
-	public void eliminarTarea(Integer idUsuario, Integer idTarea) {
-		try {
-			dao.delete(getTarea(idUsuario, idTarea));
-		} catch (Exception ex) {}
-	}
+  CLIENT_ID: string = "b98251cba6334fa997d100fd4688c28a"
+  CLIENT_SECRET: string = "caac071994b94b57adf0ec573fb94d4e"
+
+  constructor(private http: HttpClient) { }
+
+  async getToken(): Promise<RespuestaGetToken> {
+    let url = "https://accounts.spotify.com/api/token"
+
+    let auth = btoa(this.CLIENT_ID + ":" + this.CLIENT_SECRET)
+    let params : HttpParams = new HttpParams().set('grant_type', 'client_credentials')
+    let headers = {
+      'Authorization': 'Basic ' + auth, 
+      'content-type' : 'application/x-www-form-urlencoded'
+    }
+
+    return lastValueFrom(this.http.post<RespuestaGetToken>(url, params, {headers: headers}))
+  }
+
+  async getCategorias(): Promise<RespuestaGetCategorias> {
+    let url = "https://api.spotify.com/v1/browse/categories"
+    
+    return lastValueFrom(this.http.get<RespuestaGetCategorias>(url))
+  }
+
+  async getCategoriasBusqueda(texto: string): Promise<RespuestaPlaylistsBusqueda> {
+    let url = "https://api.spotify.com/v1/search"
+
+    
+    return lastValueFrom(this.http.get<RespuestaPlaylistsBusqueda>(url,
+     {
+      params: {
+        'q': texto,
+        'type': 'playlist' 
+      }
+     }
+    ))
+  }
+
+  async getPlaylistsCategoria(categoriaId: string): Promise<RespuestaCategoriaPlaylists> {
+    let url = `https://api.spotify.com/v1/browse/categories/${categoriaId}/playlists`
+    
+    return lastValueFrom(this.http.get<RespuestaCategoriaPlaylists>(url))
+  }
+
+  async getPlaylistTracks(playlistId: string): Promise<RespuestaPlaylistTracks> {
+    let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`
+    
+    return lastValueFrom(this.http.get<RespuestaPlaylistTracks>(url))
+  }
 }
 ```
-### Creación del controlador
+### Creación del interceptor
 ***
-Ahora creamos la clase TareasController en el paquete org.zabalburu.tareas.controller y le ponemos el decorador @RestController, también inyectamos el servicio con el decorador @Autowired
+Para que se añada automáticamente el token en el header de todas las peticiones, tenemos que crear un interceptor:
+1. Creamos el interceptor con el siguiente comando:
 ```
-package org.zabalburu.tareas.controller;
+ng g s services/auth --skip-tests
+```
+2. En el interceptor ponemos el siguiente código:
+```
+import { Injectable } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor
+} from '@angular/common/http';
+import { from, lastValueFrom, Observable } from 'rxjs';
+import { AlbumsService } from './albums.service';
+import { RespuestaGetToken } from '../models/get-token';
 
-import java.net.URI;
-import java.net.URISyntaxException;
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.zabalburu.tareas.dto.TareaDTO;
-import org.zabalburu.tareas.modelo.Tarea;
-import org.zabalburu.tareas.service.TareasService;
+  constructor(private servicio: AlbumsService) {}
 
-@RestController
-@RequestMapping("/tareas")
-public class TareasController {
-	@Autowired
-	private TareasService servicio;
-	
-	@GetMapping("/{idUsuario}")
-	public ResponseEntity<TareaDTO> getUsuarios(@RequestParam(defaultValue = "1") Integer pagina,
-			@PathVariable Integer idUsuario){
-		TareaDTO dto = servicio.getTareas(pagina, idUsuario);
-		if (dto == null) {
-			return ResponseEntity.notFound().build();
-		} else {
-			return ResponseEntity.ok(dto);
-		}
-	}
-	
-	@GetMapping("/pendientes/{idUsuario}")
-	public ResponseEntity<TareaDTO> getTareasPendientes(@RequestParam(defaultValue = "1") Integer pagina,
-			@PathVariable Integer idUsuario){
-		TareaDTO dto = servicio.getTareasPendientes(pagina, idUsuario);
-		if (dto == null) {
-			return ResponseEntity.notFound().build();
-		} else {
-			return ResponseEntity.ok(dto);
-		}
-	}
-	
-	@PostMapping("/{idUsuario}")
-	public ResponseEntity<Tarea> nuevaTarea(@PathVariable Integer idUsuario, @RequestBody Tarea t) throws URISyntaxException{
-		t.setIdUsuario(idUsuario);
-		t = servicio.nuevaTarea(t);
-		if (t == null) {
-			return ResponseEntity.notFound().build();
-		} else {
-			return ResponseEntity.created(new URI("http://localhost:9005/tareas/"+idUsuario+"/" +t.getId()))
-					.body(t);
-		}
-	}
-	
-	@GetMapping("/{idUsuario}/{idTarea}")
-	public ResponseEntity<Tarea> getUsuario(@PathVariable Integer idUsuario, @PathVariable Integer idTarea){
-		Tarea t = servicio.getTarea(idUsuario,idTarea);
-		if (t == null) {
-			return ResponseEntity.notFound().build();
-		} else {
-			return ResponseEntity.ok(t);
-		}
-	}
-	
-	@DeleteMapping("/{idUsuario}/{idTarea}")
-	public ResponseEntity<?> eliminarTarea(@PathVariable Integer idUsuario, @PathVariable Integer idTarea){
-		servicio.eliminarTarea(idUsuario,idTarea);
-		return ResponseEntity.ok().build();
-	}	
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return from(this.tratarPeticion(request, next))
+  }
+
+  private async tratarPeticion(req: HttpRequest<any>, next: HttpHandler) : Promise<HttpEvent<any>> {
+    let URL_OBTENER_TOKEN = "https://accounts.spotify.com/api/token";
+
+    if (req.url != URL_OBTENER_TOKEN) {
+      let tokenStringified = localStorage.getItem("token");
+      let respuestaToken: RespuestaGetToken;
+      let token: string;
+      let ahora = new Date();
+
+      if (tokenStringified) {
+        let tokenObj = JSON.parse(tokenStringified);
+        if (tokenObj && ahora < new Date(tokenObj.fecha)) {
+          token = tokenObj.token;
+        }
+        else {
+          respuestaToken = await this.servicio.getToken();
+          localStorage.setItem("token", JSON.stringify({"token": respuestaToken.access_token,"fecha":(ahora.getTime() + respuestaToken.expires_in * 1000)}));
+          token = respuestaToken.access_token;
+        }
+      }
+      else {
+        respuestaToken = await this.servicio.getToken();
+        localStorage.setItem("token", JSON.stringify({"token": respuestaToken.access_token,"fecha":(ahora.getTime() + respuestaToken.expires_in * 1000)}));
+        token = respuestaToken.access_token;
+      }
+      
+      let request = req.clone({
+        setHeaders: {
+          authorization: `Bearer ${token}`
+        }
+      });
+     
+      return lastValueFrom(next.handle(request));
+    }
+  
+    return lastValueFrom(next.handle(req));
+  }
 }
 ```
-### Añadir RestTemplate al MsTareasApplication
-***
-Hay que añadir el been del RestTemplate al MsTareasApplication
+3. Ahora, para que angular use este interceptor en todas las peticiones hay que añadir lo siguiente en el app.module.ts:
 ```
-package org.zabalburu.tareas;
+providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    } 
+  ],
+```
+### Ejemplo Componente ListadoPlaylist
+***
+Vamos a hacer un ejemplo con un componente en el cúal hay que recuperar un parámetro por la url
+1. En el constructor inyectamos el servicio y el ActivatedRoute
+2. En el ngOnInit recuperamos el valor del parámetro de la ruta con el siguiente código:
+```
+this.route.params.subscribe(params => {
+        this.texto = params['texto']
+      }
+    )
+```
+3. Una vez tenemos dicho valor almacenado en una variable lo podemos hacer para hacer una petición a uno de nuestros endpoints:\
+El código del ts de este componente quedaría así:
+```
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { RespuestaPlaylistsBusqueda } from 'src/app/models/get-playlists-busqueda';
+import { SpotifyService } from 'src/app/services/spotify.service';
 
-import javax.sql.DataSource;
+@Component({
+  selector: 'app-listado-playlist',
+  templateUrl: './listado-playlist.component.html',
+  styleUrls: ['./listado-playlist.component.css']
+})
+export class ListadoPlaylistComponent implements OnInit {
+  texto!: string
+  listaPlaylists!: RespuestaPlaylistsBusqueda
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.web.client.RestTemplate;
+  constructor(private servicio: SpotifyService, private route: ActivatedRoute) {}
 
-@SpringBootApplication
-public class MsTareasApplication {
+  async ngOnInit() {
+    this.route.params.subscribe(params => {
+        this.texto = params['texto']
+      }
+    )
 
-	public static void main(String[] args) {
-		SpringApplication.run(MsTareasApplication.class, args);
-	}
-	
-	@Bean
-	public RestTemplate gettemplate() {
-		return new RestTemplate();
-	}
+    this.listaPlaylists = await this.servicio.getCategoriasBusqueda(this.texto)
+  }    
 }
 ```
-### Probar la API
-***
-Ahora podemos probar la API en el puerto que hemos configurado en el archivo application.properties, en este caso el 9005.
-Podemos probar los siguientes endpoints:
-* GET [http://localhost:9005/tareas/{idUsuario}](http://localhost:9005/tareas/1) → Esto devuelve todas las tareas del usuarioId que le pasamos
-* GET [http://localhost:9005/tareas/pendientes/{idUsuario}](http://localhost:9005/tareas/pendientes/1) → Esto devuelve todas las tareas pendientes del usuarioId que le pasamos
-* POST [http://localhost:9005/tareas/{idUsuario}](http://localhost:9005/tareas/1) → Esto añade la tarea al usuario indicado
-* GET [http://localhost:9005/tareas/{idUsuario}/{idTarea}](http://localhost:9005/tareas/1/1) → Esto devuelve la tarea del usuario y tarea indicados
-* DELETE [http://localhost:9005/tareas/{idUsuario}/{idTarea}](http://localhost:9005/tareas/1/1) → Esto elimina la tarea del usuario y tarea indicados 
-### Posibles errores
-***
-Un posible error es que no te haga caso al puerto configurado, yo lo he soluciionado dándole a project → clean y añadiendo lo siguiente al MsTareasApplication:
+El código del html de este componente quedaría así:
 ```
-package org.zabalburu.tareas;
+<h1 class="text-center my-5">Playlists para la búsqueda {{ texto }}</h1>
 
-import javax.sql.DataSource;
+<div class="d-flex justify-content-around container flex-wrap text-center">
+    <div class="card m-2 col-4 " style="width: 18rem;" *ngFor="let playlist of listaPlaylists?.playlists?.items">
+        <img [src]="playlist.images | images" >
+        <div class="card-body">
+            <a [routerLink]="['/playlists', playlist.id]">
+                <h5 class="card-title">{{ playlist.name }}</h5>
+            </a>
+        </div>
+    </div>
+</div>
+```
+### Barra de búsqueda
+***
+Para recuperar el valor de un input hay que usar el siguiente código:
+```
+<input #input type="search" name="" id="" (keydown.enter)="buscar(input.value)" placeholder="Buscar" />
+<a (click)="buscar(input.value)" class="btn btn-success ms-2">Buscar</a>
+```
+En el #input se almacena el elemento input, por lo tanto, para pasar su valor al pulsar enter, tienes que pasar su valor, de ahí que ponga .value\
+En el .ts, recuperamos el valor y redirigimos al usuario a otro componente con el valor que recuperamos del .html\
+Código barraBusqueda.component.ts:
+```
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.web.client.RestTemplate;
+@Component({
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
+})
+export class HomeComponent {
 
-@SpringBootApplication
-public class MsTareasApplication {
+  constructor( private router: Router) {}
 
-	public static void main(String[] args) {
-		SpringApplication.run(MsTareasApplication.class, args);
-	}
-	
-	@Bean
-	public DataSource dataSource() {
-	    DriverManagerDataSource dataSource = new DriverManagerDataSource();
-	
-	    dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-	
-	    dataSource.setUsername("sa");
-	
-	    dataSource.setPassword("tiger");
-	
-	    dataSource.setUrl( "jdbc:sqlserver://localhost:2000;databaseName=Northwind;TrustServerCertificate=True;");
-	
-	    return dataSource;
-	
-	 }
-	
-	@Bean
-	public RestTemplate gettemplate() {
-		return new RestTemplate();
-	}
+  buscar(texto: string) {
+    this.router.navigate(["/listado-peliculas/" + texto])
+  }
 }
 ```
-Y luego borrándolo.
